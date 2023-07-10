@@ -437,6 +437,7 @@ class ActiveSubspace:
             predictions = self._regression_net.forward(thetas)
         loss = predictions.mean()
         loss.backward()
+
         gradients = torch.squeeze(thetas.grad)
         if norm_gradients_to_prior:
             if hasattr(self._posterior.prior, "stddev") and hasattr(
@@ -449,6 +450,10 @@ class ActiveSubspace:
                 self._prior_scale = torch.std(prior_samples, dim=0)
                 self._prior_mean = torch.mean(prior_samples, dim=0)
             gradients *= self._prior_scale
+
+        if gradients.dim() == 1:
+            gradients = gradients.unsqueeze(1) 
+        
         outer_products = torch.einsum("bi,bj->bij", (gradients, gradients))
         average_outer_product = outer_products.mean(dim=0)
 
